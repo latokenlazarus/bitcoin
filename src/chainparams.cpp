@@ -122,8 +122,8 @@ public:
 
         genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        //assert(consensus.hashGenesisBlock == uint256S("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
+        // assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
@@ -229,19 +229,19 @@ public:
         nDefaultPort = 55925;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1521745618, 293345, 0x1e0ffff0, 0xAD, 50 * COIN);
+        genesis = CreateGenesisBlock(1521809911, 293345, 0x1e0ffff0, 0xAD, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString());
+        LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());
         assert(consensus.hashGenesisBlock == uint256S(consensus.hashGenesisBlock.ToString()));
         assert(genesis.hashMerkleRoot == uint256S(genesis.hashMerkleRoot.ToString()));
 
-        vFixedSeeds.clear();
+        /* vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch");
         vSeeds.emplace_back("seed.tbtc.petertodd.org");
         vSeeds.emplace_back("seed.testnet.bitcoin.sprovoost.nl");
-        vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9
+        vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9 */
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(127,113);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(154,196);
