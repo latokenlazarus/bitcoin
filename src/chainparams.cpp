@@ -5,9 +5,10 @@
 
 #include <chainparams.h>
 #include <consensus/merkle.h>
-
+#include <arith_uint256.h>
 #include <tinyformat.h>
 #include <util.h>
+#include <ctime>
 #include <utilstrencodings.h>
 
 #include <assert.h>
@@ -226,12 +227,24 @@ public:
         pchMessageStart[1] = 0xc4;
         pchMessageStart[2] = 0xb9;
         pchMessageStart[3] = 0xd7;
-        nDefaultPort = 55925;
+        nDefaultPort = 18333;
         nPruneAfterHeight = 1000;
-
-        genesis = CreateGenesisBlock(1522054761, 293345, 0x1e0ffff0, 0xAD, 50 * COIN);
+        int nNonce = 0;
+        int secs = time(NULL);
+        for (; nNonce < (int)1e9; ++nNonce) {       
+            genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
+            consensus.hashGenesisBlock = genesis.GetHash();
+            arith_uint256 bnTarget;
+            bool fNegative, fOveflow;
+            bnTarget.SetCompact(0x1e0ffff0, &fNegative, &fOveflow);
+            if (UintToArith256(consensus.hashGenesisBlock) <= bnTarget) {
+                break;
+            }
+        }
+        fprintf(stderr, "nNonce: %d ||| secs: %d\n", nNonce, secs);
+        genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());
+        LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());    
         assert(consensus.hashGenesisBlock == uint256S(consensus.hashGenesisBlock.ToString()));
         assert(genesis.hashMerkleRoot == uint256S(genesis.hashMerkleRoot.ToString()));
 
