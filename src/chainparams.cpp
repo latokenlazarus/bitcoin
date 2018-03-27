@@ -229,9 +229,9 @@ public:
         pchMessageStart[3] = 0xd7;
         nDefaultPort = 18333;
         nPruneAfterHeight = 1000;
-        int nNonce = 0;
-        int secs = time(NULL);
-        for (; nNonce < (int)1e9; ++nNonce) {       
+        int nNonce = 635784;
+        int secs = 1522143054;
+        /*for (; nNonce < (int)1e9; ++nNonce) {       
             genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
             consensus.hashGenesisBlock = genesis.GetHash();
             arith_uint256 bnTarget;
@@ -241,7 +241,7 @@ public:
                 break;
             }
         }
-        fprintf(stderr, "nNonce: %d ||| secs: %d\n", nNonce, secs);
+        fprintf(stderr, "nNonce: %d ||| secs: %d\n", nNonce, secs);*/
         genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());    
