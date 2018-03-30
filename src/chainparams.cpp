@@ -227,10 +227,10 @@ public:
         pchMessageStart[1] = 0xc4;
         pchMessageStart[2] = 0xb9;
         pchMessageStart[3] = 0xd7;
-        nDefaultPort = 18333;
+        nDefaultPort = 55917;
         nPruneAfterHeight = 1000;
-        int nNonce = 635784;
-        int secs = 1522143054;
+        int nNonce = 946512;
+        int secs = 1522341838;
         /*for (; nNonce < (int)1e9; ++nNonce) {       
             genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
             consensus.hashGenesisBlock = genesis.GetHash();
@@ -244,7 +244,7 @@ public:
         fprintf(stderr, "nNonce: %d ||| secs: %d\n", nNonce, secs);*/
         genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());    
+        // LogPrintf("Genesis BlockHash: %s\n", consensus.hashGenesisBlock.ToString().c_str());    
         assert(consensus.hashGenesisBlock == uint256S(consensus.hashGenesisBlock.ToString()));
         assert(genesis.hashMerkleRoot == uint256S(genesis.hashMerkleRoot.ToString()));
 
@@ -256,9 +256,9 @@ public:
         vSeeds.emplace_back("seed.testnet.bitcoin.sprovoost.nl");
         vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9 */
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(127,113);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(154,196);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(37,241);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,121);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,203);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x37, 0x23, 0x89, 0xEF};
         base58Prefixes[EXT_SECRET_KEY] = {0x37, 0x23, 0x85, 0x99};
 
