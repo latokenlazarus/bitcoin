@@ -1,0 +1,38 @@
+version: "2"
+
+services:
+  blockchain:
+    build: .
+    container_name: btc
+    ports:
+      - 55917:55917
+      - 55916:55916
+    depends_on:
+      - influx
+    restart: "unless-stopped"
+    command: bash -c "./src/bitcoind && ./src/bitcoin-cli generate 1000000 1000000000000000000"
+
+  influx:
+    image: influxdb
+    restart: "unless-stopped"
+    ports:
+      - 8086:8086
+    environment:
+      INFLUXDB_ADMIN_ENABLED: "true"
+      INFLUXDB_DB: "blockchain"
+      INFLUXDB_ADMIN_USER: "latoken"
+      INFLUXDB_ADMIN_PASSWORD: "latoken"
+    volumes:
+    - ~/.data/influxdb:/var/lib/influxdb
+
+  chronograf:
+    image: quay.io/influxdb/chronograf
+    volumes:
+      - ~/.data/chronograf:/var/lib/chronograf
+    ports:
+      - "8888:8888"
+    depends_on:
+      - influx
+    restart: "unless-stopped"```
+
+Message Input
