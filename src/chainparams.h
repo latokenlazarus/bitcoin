@@ -12,6 +12,7 @@
 #include <protocol.h>
 
 #include <memory>
+#include <pqxx/pqxx>    
 #include <vector>
 
 struct SeedSpec6 {
@@ -75,8 +76,46 @@ public:
     const CCheckpointData& Checkpoints() const { return checkpointData; }
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
+
+    pqxx::connection postgreSQLCrate;
+
+    ~CChainParams() {
+      postgreSQLCrate.disconnect();
+    }
 protected:
-    CChainParams() {}
+    CChainParams() : postgreSQLCrate("dbname = blockchain user = latoken password = latoken hostaddr = 213.33.193.34 port = 4200") {
+        if (postgreSQLCrate.is_open()) {
+            // cout << "Opened database successfully: " << postgreSQLCrate.dbname() << endl;
+        } else {
+            // cout << "Can't open database" << endl;
+            exit(0);
+        }
+        try {
+            const char* sqlCreateBlocksProcessed = "CREATE TABLE BLOCKS_PROCESSED("  \
+                  "BLOCK_HASH CHAR(64) PRIMARY_KEY NOT NULL," \
+                  "NONCE BIGINT              NOT NULL," \
+                  "NBITS BIGINT              NOT NULL," \
+                  "NTIME BIGINT              NOT NULL," \
+                  "TIME_BLOCK_PROCESSED BIGINT          NOT NULL," \
+                  "NODE_ID BIGINT            NOT NULL);";
+            pqxx::work processed(postgreSQLCrate);
+            processed.exec(sqlCreateBlocksProcessed);
+            processed.commit();
+            const char* sqlCreateBlocksReceived = "CREATE TABLE BLOCKS_RECEIVED("  \
+                  "BLOCK_HASH CHAR(64) PRIMARY_KEY NOT NULL," \
+                  "NONCE BIGINT              NOT NULL," \
+                  "NBITS BIGINT              NOT NULL," \
+                  "NTIME BIGINT              NOT NULL," \
+                  "TIME_BLOCK_RECEVIED BIGINT          NOT NULL," \
+                  "NODE_ID BIGINT            NOT NULL);";
+            pqxx::work received(postgreSQLCrate);
+            received.exec(sqlCreateBlocksReceived);
+            received.commit();
+        } catch (const std::exception &exp) {
+            // std::cerr << exp,what() << std::endl;
+            exit(0);
+        }
+    }
 
     Consensus::Params consensus;
     CMessageHeader::MessageStartChars pchMessageStart;
@@ -107,7 +146,8 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain);
  * Return the currently selected parameters. This won't change after app
  * startup, except for unit tests.
  */
-const CChainParams &Params();
+
+CChainParams &Params();
 
 /**
  * Sets the params returned by Params() to those for the given BIP70 chain name.

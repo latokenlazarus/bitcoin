@@ -30,7 +30,10 @@
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
 
+#include <ctime>
 #include <memory>
+#include <pqxx/pqxx>  
+
 
 #if defined(NDEBUG)
 # error "Bitcoin cannot be compiled without assertions."
@@ -1330,7 +1333,7 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
             nodestate->nUnconnectingHeaders++;
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETHEADERS, chainActive.GetLocator(pindexBestHeader), uint256()));
             LogPrint(BCLog::NET, "received header %s: missing prev block %s, sending getheaders (%d) to end (peer=%d, nUnconnectingHeaders=%d)\n",
-                    headers[0].GetHash().ToString(),
+                    headers[0].GetHash().ToString().c_str(),
                     headers[0].hashPrevBlock.ToString(),
                     pindexBestHeader->nHeight,
                     pfrom->GetId(), nodestate->nUnconnectingHeaders);
@@ -1523,7 +1526,7 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
     return true;
 }
 
-bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, int64_t nTimeReceived, const CChainParams& chainparams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
+bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, int64_t nTimeReceived, CChainParams& chainparams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
 {
     LogPrint(BCLog::NET, "received: %s (%u bytes) peer=%d\n", SanitizeString(strCommand), vRecv.size(), pfrom->GetId());
     if (gArgs.IsArgSet("-dropmessagestest") && GetRand(gArgs.GetArg("-dropmessagestest", 0)) == 0)
@@ -2187,7 +2190,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
             LogPrint(BCLog::MEMPOOL, "AcceptToMemoryPool: peer=%d: accepted %s (poolsz %u txn, %u kB)\n",
                 pfrom->GetId(),
-                tx.GetHash().ToString(),
+                tx.GetHash().ToString().c_str(),
                 mempool.size(), mempool.DynamicMemoryUsage() / 1000);
 
             // Recursively process any orphan transactions that depended on this one
@@ -2276,7 +2279,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     LogPrint(BCLog::MEMPOOL, "mapOrphan overflow, removed %u tx\n", nEvicted);
                 }
             } else {
-                LogPrint(BCLog::MEMPOOL, "not keeping orphan with rejected parents %s\n",tx.GetHash().ToString());
+                LogPrint(BCLog::MEMPOOL, "not keeping orphan with rejected parents %s\n",tx.GetHash().ToString().c_str());
                 // We will continue to reject this tx since it has rejected
                 // parents so avoid re-requesting it from other peers.
                 recentRejects->insert(tx.GetHash());
@@ -2306,10 +2309,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // case.
                 int nDoS = 0;
                 if (!state.IsInvalid(nDoS) || nDoS == 0) {
-                    LogPrintf("Force relaying tx %s from whitelisted peer=%d\n", tx.GetHash().ToString(), pfrom->GetId());
+                    LogPrintf("Force relaying tx %s from whitelisted peer=%d\n", tx.GetHash().ToString().c_str(), pfrom->GetId());
                     RelayTransaction(tx, connman);
                 } else {
-                    LogPrintf("Not relaying invalid transaction %s from whitelisted peer=%d (%s)\n", tx.GetHash().ToString(), pfrom->GetId(), FormatStateMessage(state));
+                    LogPrintf("Not relaying invalid transaction %s from whitelisted peer=%d (%s)\n", tx.GetHash().ToString().c_str(), pfrom->GetId(), FormatStateMessage(state));
                 }
             }
         }
@@ -2320,7 +2323,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         int nDoS = 0;
         if (state.IsInvalid(nDoS))
         {
-            LogPrint(BCLog::MEMPOOLREJ, "%s from peer=%d was not accepted: %s\n", tx.GetHash().ToString(),
+            LogPrint(BCLog::MEMPOOLREJ, "%s from peer=%d was not accepted: %s\n", tx.GetHash().ToString().c_str(),
                 pfrom->GetId(),
                 FormatStateMessage(state));
             if (state.GetRejectCode() > 0 && state.GetRejectCode() < REJECT_INTERNAL) // Never send AcceptToMemoryPool's internal codes over P2P
@@ -2449,6 +2452,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 if (status == READ_STATUS_INVALID) {
                     MarkBlockAsReceived(pindex->GetBlockHash()); // Reset in-flight state in case of whitelist
                     Misbehaving(pfrom->GetId(), 100, strprintf("Peer %d sent us invalid compact block\n", pfrom->GetId()));
+                    uint32_t processedTime = time(NULL);
+                    char* sqlBlockProcessed;
+                    sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                                    VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                                    pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                    pqxx::work processed(chainparams.postgreSQLCrate);
+                    processed.exec(sqlBlockProcessed);
+                    processed.commit();
                     return true;
                 } else if (status == READ_STATUS_FAILED) {
                     // Duplicate txindexes, the block is now in-flight, so just request it
@@ -2536,6 +2547,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // compact blocks with less work than our tip, it is safe to treat
             // reconstructed compact blocks as having been requested.
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
+            uint32_t processedTime = time(NULL);
+            char* sqlBlockProcessed;
+            sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                            VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+            pqxx::work processed(chainparams.postgreSQLCrate);
+            processed.exec(sqlBlockProcessed);
+            processed.commit();
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
             } else {
@@ -2549,6 +2568,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // ProcessNewBlock so that a malleated cmpctblock announcement
                 // can't be used to interfere with block relay.
                 MarkBlockAsReceived(pblock->GetHash());
+                uint32_t processedTime = time(NULL);
+                char* sqlBlockProcessed;
+                sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                                VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                pqxx::work processed(chainparams.postgreSQLCrate);
+                processed.exec(sqlBlockProcessed);
+                processed.commit();
             }
         }
 
@@ -2575,6 +2602,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             ReadStatus status = partialBlock.FillBlock(*pblock, resp.txn);
             if (status == READ_STATUS_INVALID) {
                 MarkBlockAsReceived(resp.blockhash); // Reset in-flight state in case of whitelist
+                uint32_t processedTime = time(NULL);
+                char* sqlBlockProcessed;
+                sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                                VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                pqxx::work processed(chainparams.postgreSQLCrate);
+                processed.exec(sqlBlockProcessed);
+                processed.commit();
                 Misbehaving(pfrom->GetId(), 100, strprintf("Peer %d sent us invalid compact block/non-matching block transactions\n", pfrom->GetId()));
                 return true;
             } else if (status == READ_STATUS_FAILED) {
@@ -2601,6 +2636,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // handling in ProcessNewBlock to ensure the block index is
                 // updated, reject messages go out, etc.
                 MarkBlockAsReceived(resp.blockhash); // it is now an empty pointer
+                uint32_t processedTime = time(NULL);
+                char* sqlBlockProcessed;
+                sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                                VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                pqxx::work processed(chainparams.postgreSQLCrate);
+                processed.exec(sqlBlockProcessed);
+                processed.commit();
                 fBlockRead = true;
                 // mapBlockSource is only used for sending reject messages and DoS scores,
                 // so the race between here and cs_main in ProcessNewBlock is fine.
@@ -2619,6 +2662,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // protections in the compact block handler -- see related comment
             // in compact block optimistic reconstruction handling.
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
+            uint32_t processedTime = time(NULL);
+            char* sqlBlockProcessed;
+            sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                            VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+            pqxx::work processed(chainparams.postgreSQLCrate);
+            processed.exec(sqlBlockProcessed);
+            processed.commit();
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
             } else {
@@ -2659,7 +2710,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
 
-        LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
+        LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString().c_str(), pfrom->GetId());
 
         bool forceProcessing = false;
         const uint256 hash(pblock->GetHash());
@@ -2668,12 +2719,28 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // Also always process if we requested the block explicitly, as we may
             // need it even though it is not a candidate for a new best tip.
             forceProcessing |= MarkBlockAsReceived(hash);
+            uint32_t processedTime = time(NULL);
+            char* sqlBlockProcessed;
+            sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                            VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+            pqxx::work processed(chainparams.postgreSQLCrate);
+            processed.exec(sqlBlockProcessed);
+            processed.commit();
             // mapBlockSource is only used for sending reject messages and DoS scores,
             // so the race between here and cs_main in ProcessNewBlock is fine.
             mapBlockSource.emplace(hash, std::make_pair(pfrom->GetId(), true));
         }
         bool fNewBlock = false;
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
+        uint32_t processedTime = time(NULL);
+        char* sqlBlockProcessed;
+        sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
+                                        VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
+                                        pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+        pqxx::work processed(chainparams.postgreSQLCrate);
+        processed.exec(sqlBlockProcessed);
+        processed.commit();
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
         } else {
@@ -2925,7 +2992,7 @@ static bool SendRejectsAndCheckIfBanned(CNode* pnode, CConnman* connman)
 
 bool PeerLogicValidation::ProcessMessages(CNode* pfrom, std::atomic<bool>& interruptMsgProc)
 {
-    const CChainParams& chainparams = Params();
+    CChainParams& chainparams = Params();
     //
     // Message format
     //  (4) message start
@@ -3378,7 +3445,7 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                     // We only send up to 1 block as header-and-ids, as otherwise
                     // probably means we're doing an initial-ish-sync or they're slow
                     LogPrint(BCLog::NET, "%s sending header-and-ids %s to peer=%d\n", __func__,
-                            vHeaders.front().GetHash().ToString(), pto->GetId());
+                            vHeaders.front().GetHash().ToString().c_str(), pto->GetId());
 
                     int nSendFlags = state.fWantsCmpctWitness ? 0 : SERIALIZE_TRANSACTION_NO_WITNESS;
 
@@ -3407,11 +3474,11 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                     if (vHeaders.size() > 1) {
                         LogPrint(BCLog::NET, "%s: %u headers, range (%s, %s), to peer=%d\n", __func__,
                                 vHeaders.size(),
-                                vHeaders.front().GetHash().ToString(),
-                                vHeaders.back().GetHash().ToString(), pto->GetId());
+                                vHeaders.front().GetHash().ToString().c_str(),
+                                vHeaders.back().GetHash().ToString().c_str(), pto->GetId());
                     } else {
                         LogPrint(BCLog::NET, "%s: sending header %s to peer=%d\n", __func__,
-                                vHeaders.front().GetHash().ToString(), pto->GetId());
+                                vHeaders.front().GetHash().ToString().c_str(), pto->GetId());
                     }
                     connman->PushMessage(pto, msgMaker.Make(NetMsgType::HEADERS, vHeaders));
                     state.pindexBestHeaderSent = pBestIndex;

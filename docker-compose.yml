@@ -1,0 +1,25 @@
+version: "2"
+
+services:
+  blockchain:
+    build: .
+    container_name: btc
+    ports:
+      - 55909:55909
+      - 55908:55908
+    depends_on:
+      - crate
+    restart: "unless-stopped"
+    command: bash -c "./src/bitcoind && ./src/bitcoin-cli generate 100000 1000000000"
+
+  postgres:
+    image: postgres
+    ports:
+      - 4200:4200
+    environment:
+      CRATE_HEAP_SIZE: 1g
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - /mnt/data/crate/mommys_miners:/data
+    command: crate -Cnetwork.host=_site_
+    restart: unless-stopped
