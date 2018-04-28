@@ -20,7 +20,7 @@ RUN apt-get update
 RUN apt-get install -y postgis libpq-dev libpq5 libmysqlclient-dev
 RUN add-apt-repository ppa:jtv/ppa
 RUN apt-get update
-RUN apt-get install -y libpqxx-4.0
+
 
 COPY . /opt
 RUN mkdir -p /root/.bitcoin
@@ -29,6 +29,7 @@ WORKDIR /opt/libpqxx
 RUN ./configure --enable-shared
 RUN make
 RUN make install
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pqxx
 WORKDIR /opt
 RUN ./autogen.sh
 RUN ./configure
