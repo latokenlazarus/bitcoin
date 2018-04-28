@@ -5,10 +5,6 @@
 
 #include <chainparams.h>
 #include <consensus/merkle.h>
-<<<<<<< HEAD
-
-=======
->>>>>>> 04142f317ff8888a5a95790e74b4abb6868c3a2f
 #include <ctime>
 #include <arith_uint256.h>
 #include <tinyformat.h>
@@ -234,8 +230,8 @@ public:
         pchMessageStart[3] = 0x07;
         nDefaultPort = 55909;
         nPruneAfterHeight = 1000;
-        int nNonce = 148465;
-        int secs = 1524847216;
+        int nNonce = 249250;
+        int secs = 1524915315;
         /*for (; nNonce < (int)1e9; ++nNonce) {       
             genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
             consensus.hashGenesisBlock = genesis.GetHash();
@@ -256,7 +252,7 @@ public:
         /*vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        /*vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch");
+        vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch");
         vSeeds.emplace_back("seed.tbtc.petertodd.org");
         vSeeds.emplace_back("seed.testnet.bitcoin.sprovoost.nl");
         vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9*/
