@@ -5,7 +5,10 @@
 
 #include <chainparams.h>
 #include <consensus/merkle.h>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 04142f317ff8888a5a95790e74b4abb6868c3a2f
 #include <ctime>
 #include <arith_uint256.h>
 #include <tinyformat.h>
@@ -190,20 +193,21 @@ public:
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
-        strNetworkID = "latoken_btc_test";
+        strNetworkID = "latoken_btc_testnet";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 0; // 00000000040b4e986385315e14bee30ad876d8b47f748025b26683116d21aa65
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x00");
         consensus.BIP65Height = 0; // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
         consensus.BIP66Height = 0; // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
-        consensus.powLimit = uint256S("0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 8 * 60; // two weeks
+
+        consensus.powLimit = uint256S("0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nPowTargetTimespan = 8 * 60; // 1 day
         consensus.nPowTargetSpacing = 2 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
-        consensus.nRuleChangeActivationThreshold = 0.75 * consensus.nPowTargetTimespan / consensus.nPowTargetSpacing; // 75% for testchains
-        consensus.nMinerConfirmationWindow = consensus.nPowTargetTimespan / consensus.nPowTargetSpacing; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nMinerConfirmationWindow = consensus.nPowTargetTimespan / consensus.nPowTargetSpacing;
+        consensus.nRuleChangeActivationThreshold = 0.75 * consensus.nMinerConfirmationWindow;// 75% for testchains
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -232,12 +236,13 @@ public:
         nPruneAfterHeight = 1000;
         int nNonce = 148465;
         int secs = 1524847216;
-        /*for (; nNonce < (int)1e12; ++nNonce) {       
+        /*for (; nNonce < (int)1e9; ++nNonce) {       
             genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
             consensus.hashGenesisBlock = genesis.GetHash();
             arith_uint256 bnTarget;
             bool fNegative, fOveflow;
             bnTarget.SetCompact(0x1e0ffff0, &fNegative, &fOveflow); 
+            bnTarget.SetCompact(0x1e0ffff0, &fNegative, &fOveflow);
             if (UintToArith256(consensus.hashGenesisBlock) <= bnTarget) {
                 break;
             }
@@ -245,8 +250,10 @@ public:
         fprintf(stderr, "nNonce: %d ||| secs: %d\n", nNonce, secs);*/
         genesis = CreateGenesisBlock(secs, nNonce, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
+        // assert(consensus.hashGenesisBlock == uint256S("0x000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+        // assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
 
-        vFixedSeeds.clear();
+        /*vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
         /*vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch");
@@ -259,7 +266,6 @@ public:
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,243);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x85, 0xDA};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x87, 0xA4};
-
         bech32_hrp = "tb";
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));

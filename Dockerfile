@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 USER root
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -18,9 +18,6 @@ RUN apt-get update
 RUN apt-get install -y postgresql postgresql-server-dev-all postgresql-client postgresql-contrib
 RUN apt-get update
 RUN apt-get install -y postgis libpq-dev libpq5 libmysqlclient-dev
-RUN add-apt-repository ppa:jtv/ppa
-RUN apt-get update
-
 
 COPY . /opt
 RUN mkdir -p /root/.bitcoin
@@ -36,3 +33,4 @@ RUN ./configure
 RUN make
 
 EXPOSE 55909 55908
+

@@ -4,11 +4,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <pow.h>
-
 #include <arith_uint256.h>
 #include <chain.h>
 #include <primitives/block.h>
 #include <uint256.h>
+#include <util.h>
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
@@ -76,7 +76,6 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     bool fNegative;
     bool fOverflow;
     arith_uint256 bnTarget;
-
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
@@ -84,8 +83,9 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
         return false;
 
     // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget)
+    if (UintToArith256(hash) > bnTarget) {
         return false;
+    }
 
     return true;
 }
