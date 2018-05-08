@@ -83,7 +83,7 @@ public:
       postgreSQLCrate.disconnect();
     }
 protected:
-    CChainParams() : postgreSQLCrate("dbname = blockchain user = latoken password = latoken hostaddr = 213.33.193.34 port = 4200") {
+    CChainParams() : postgreSQLCrate("dbname = blockchain user = latoken password = latoken hostaddr = 127.0.0.1 port = 5432") {
         if (postgreSQLCrate.is_open()) {
             // cout << "Opened database successfully: " << postgreSQLCrate.dbname() << endl;
         } else {

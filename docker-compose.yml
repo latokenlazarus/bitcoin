@@ -15,11 +15,13 @@ services:
   postgres:
     image: postgres
     ports:
-      - 4200:4200
-    environment:
-      CRATE_HEAP_SIZE: 1g
-      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
-    volumes:
-      - /mnt/data/crate/mommys_miners:/data
-    command: crate -Cnetwork.host=_site_
+      - 5432:5432
     restart: unless-stopped
+    volumes:
+      - pgdata:/opt/data 
+    environment:
+      - POSTGRES_USER: latoken
+      - POSTGRES_PASSWORD: latoken
+      - POSTGRES_DB: blockchain
+  volumes:
+     pgdata:
