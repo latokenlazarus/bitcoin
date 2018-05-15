@@ -1,9 +1,22 @@
 version: "2"
 
 services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - pgdata:/opt/data
+    environment:
+       POSTGRES_USER: latoken
+       POSTGRES_PASSWORD: latoken
+       POSTGRES_DB: blockchain
+
   blockchain:
+    image: vlazlatoken/bitcoin-testnet-2
     build: .
-    container_name: btc
+    container_name: bitcoin
     ports:
       - 55909:55909
       - 55908:55908
@@ -12,16 +25,9 @@ services:
     restart: "unless-stopped"
     command: bash -c "./src/bitcoind && ./src/bitcoin-cli generate 100000 1000000000"
 
-  postgres:
-    image: postgres
-    ports:
-      - 5432:5432
-    restart: unless-stopped
-    volumes:
-      - pgdata:/opt/data 
-    environment:
-      - POSTGRES_USER: latoken
-      - POSTGRES_PASSWORD: latoken
-      - POSTGRES_DB: blockchain
-  volumes:
-     pgdata:
+volumes:
+    pgdata:
+
+
+
+

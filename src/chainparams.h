@@ -6,13 +6,14 @@
 #ifndef BITCOIN_CHAINPARAMS_H
 #define BITCOIN_CHAINPARAMS_H
 
+#include <iostream>
 #include <chainparamsbase.h>
 #include <consensus/params.h>
 #include <primitives/block.h>
 #include <protocol.h>
-
+#include <util.h>
 #include <memory>
-#include <pqxx/pqxx>    
+#include <pqxx/pqxx>
 #include <vector>
 
 struct SeedSpec6 {
@@ -80,19 +81,37 @@ public:
     pqxx::connection postgreSQLCrate;
 
     ~CChainParams() {
-      postgreSQLCrate.disconnect();
+        try {
+            const char* sqlDropBlocksProcessed = "DROP TABLE BLOCKS_PROCESSED";
+            pqxx::work drop_processed(postgreSQLCrate);
+            drop_processed.exec(sqlDropBlocksProcessed);
+            drop_processed.commit();
+            const char* sqlDropBlocksReceived = "DROP TABLE BLOCKS_RECEIVED";
+            pqxx::work drop_received(postgreSQLCrate);
+            drop_received.exec(sqlDropBlocksReceived);
+            drop_received.commit();   
+            LogPrintf("Relations erased\n");
+        } catch (const std::exception &exp) {
+            LogPrintf("Relations erased with exceptionx\n");
+            // std::cerr << exp.what() << std::endl;
+            // exit(4);
+        }
+        postgreSQLCrate.disconnect();
     }
+
 protected:
-    CChainParams() : postgreSQLCrate("dbname = blockchain user = latoken password = latoken hostaddr = 127.0.0.1 port = 5432") {
+
+
+    CChainParams() : postgreSQLCrate("dbname = blockchain user = latoken password = latoken hostaddr = 172.18.0.2 port = 5432") {
         if (postgreSQLCrate.is_open()) {
-            // cout << "Opened database successfully: " << postgreSQLCrate.dbname() << endl;
+            LogPrintf("Opened postgreSQLCrate\n");
         } else {
+            LogPrintf("Can't open postgreSQLCrate\n");
             // cout << "Can't open database" << endl;
-            exit(0);
         }
         try {
             const char* sqlCreateBlocksProcessed = "CREATE TABLE BLOCKS_PROCESSED("  \
-                  "BLOCK_HASH CHAR(64) PRIMARY_KEY NOT NULL," \
+                  "BLOCK_HASH CHAR(64) PRIMARY KEY NOT NULL," \
                   "NONCE BIGINT              NOT NULL," \
                   "NBITS BIGINT              NOT NULL," \
                   "NTIME BIGINT              NOT NULL," \
@@ -102,7 +121,7 @@ protected:
             processed.exec(sqlCreateBlocksProcessed);
             processed.commit();
             const char* sqlCreateBlocksReceived = "CREATE TABLE BLOCKS_RECEIVED("  \
-                  "BLOCK_HASH CHAR(64) PRIMARY_KEY NOT NULL," \
+                  "BLOCK_HASH CHAR(64) PRIMARY KEY NOT NULL," \
                   "NONCE BIGINT              NOT NULL," \
                   "NBITS BIGINT              NOT NULL," \
                   "NTIME BIGINT              NOT NULL," \
@@ -110,10 +129,12 @@ protected:
                   "NODE_ID BIGINT            NOT NULL);";
             pqxx::work received(postgreSQLCrate);
             received.exec(sqlCreateBlocksReceived);
-            received.commit();
+            received.commit(); 
+            LogPrintf("Relations created\n");
         } catch (const std::exception &exp) {
-            // std::cerr << exp,what() << std::endl;
-            exit(0);
+            LogPrintf("Relations created with exception\n");
+            // std::cerr << exp.what() << std::endl;
+            // exit(2);
         }
     }
 

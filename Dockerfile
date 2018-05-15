@@ -20,13 +20,13 @@ RUN mkdir -p /root/.bitcoin
 COPY ./bitcoin.conf /root/.bitcoin/bitcoin.conf
 WORKDIR /opt/libpqxx
 RUN ./configure --enable-shared
-RUN make
+RUN make -j 4
 RUN make install
 RUN apt-get install libpqxx-4.0v5
 WORKDIR /opt
 RUN ./autogen.sh
 RUN ./configure
-RUN make
+RUN make -j 4
 
 EXPOSE 55909 55908
 

@@ -2456,7 +2456,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     char* sqlBlockProcessed;
                     sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                                     VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                                    pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                                    pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
                     pqxx::work processed(chainparams.postgreSQLCrate);
                     processed.exec(sqlBlockProcessed);
                     processed.commit();
@@ -2549,9 +2549,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             uint32_t processedTime = time(NULL);
             char* sqlBlockProcessed;
+            std::cerr << "WOOO1\n";
             sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                             VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
             pqxx::work processed(chainparams.postgreSQLCrate);
             processed.exec(sqlBlockProcessed);
             processed.commit();
@@ -2570,9 +2571,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 MarkBlockAsReceived(pblock->GetHash());
                 uint32_t processedTime = time(NULL);
                 char* sqlBlockProcessed;
+                std::cerr << "WOOO2\n";
                 sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                                 VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
                 pqxx::work processed(chainparams.postgreSQLCrate);
                 processed.exec(sqlBlockProcessed);
                 processed.commit();
@@ -2604,9 +2606,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 MarkBlockAsReceived(resp.blockhash); // Reset in-flight state in case of whitelist
                 uint32_t processedTime = time(NULL);
                 char* sqlBlockProcessed;
+                std::cerr << "WOOO3\n";
                 sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                                 VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
                 pqxx::work processed(chainparams.postgreSQLCrate);
                 processed.exec(sqlBlockProcessed);
                 processed.commit();
@@ -2638,9 +2641,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 MarkBlockAsReceived(resp.blockhash); // it is now an empty pointer
                 uint32_t processedTime = time(NULL);
                 char* sqlBlockProcessed;
+                std::cerr << "WOOO4\n";
                 sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                                 VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                                pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                                pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
                 pqxx::work processed(chainparams.postgreSQLCrate);
                 processed.exec(sqlBlockProcessed);
                 processed.commit();
@@ -2664,9 +2668,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             uint32_t processedTime = time(NULL);
             char* sqlBlockProcessed;
+            std::cerr << "WOOO5\n";
             sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                             VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
             pqxx::work processed(chainparams.postgreSQLCrate);
             processed.exec(sqlBlockProcessed);
             processed.commit();
@@ -2721,9 +2726,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             forceProcessing |= MarkBlockAsReceived(hash);
             uint32_t processedTime = time(NULL);
             char* sqlBlockProcessed;
+            std::cerr << "WOOO6\n";
             sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_RECEIVED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                             VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                            pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                            pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
             pqxx::work processed(chainparams.postgreSQLCrate);
             processed.exec(sqlBlockProcessed);
             processed.commit();
@@ -2735,9 +2741,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
         uint32_t processedTime = time(NULL);
         char* sqlBlockProcessed;
+        std::cerr << "WOOO7\n";
         sprintf(sqlBlockProcessed, "INSERT INTO BLOCKS_PROCESSED(BLOCK_HASH, NONCE, NBITS, NTIME, TIME_BLOCK_PROCESSED, NODE_ID) \
                                         VALUES (%s, %u, %u, %u, %u, %lld)", pblock->GetHash().ToString().c_str(), pblock->nNonce, 
-                                        pblock->nBits, pblock->nTime, processedTime, static_cast<int64_t>(pfrom->GetId()));
+                                        pblock->nBits, pblock->nTime, processedTime, static_cast<long long>(pfrom->GetId()));
         pqxx::work processed(chainparams.postgreSQLCrate);
         processed.exec(sqlBlockProcessed);
         processed.commit();
